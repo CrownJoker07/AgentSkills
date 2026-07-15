@@ -88,7 +88,7 @@ git -C "$UNITY_PROJECT_PATH" status --short --branch
 
 ## 创建 Worktree
 
-优先遵循仓库文档中的基础分支和分支命名约定。没有命名约定时使用：
+用户在任务描述或飞书卡片中指定基础分支时，优先使用该分支。未指定时遵循仓库文档中的基础分支约定；两者都未指定时使用 `origin/HEAD`。不得猜测名称相近的分支。分支命名优先遵循仓库约定，没有命名约定时使用：
 
 ```text
 fix/<bug-name>
@@ -96,21 +96,23 @@ fix/<bug-name>
 
 将 BUG 名称转换为简短的小写英文连字符名称。同名本地或远程分支已经存在时追加 `YYYYMMDD-HHMM`。
 
-从 Skill 根目录运行：
+创建前先执行 `git fetch origin`，获取指定基础分支的最新远程提交；不得通过切换、拉取、合并或重置基础分支来更新它。将用户指定的基础分支解析为 `origin/<基础分支>`，并从该远程引用创建新的修复分支和 worktree：
+
+```bash
+scripts/create-worktree.sh "$UNITY_PROJECT_PATH" "$BRANCH" "origin/$BASE_BRANCH"
+```
+
+用户未指定且仓库文档也未约定基础分支时，省略第三个参数，由脚本使用最新获取的 `origin/HEAD`：
 
 ```bash
 scripts/create-worktree.sh "$UNITY_PROJECT_PATH" "$BRANCH"
 ```
 
-默认基础分支来自 `origin/HEAD`。仓库没有 `origin/HEAD` 时，要求用户明确提供基础引用：
-
-```bash
-scripts/create-worktree.sh "$UNITY_PROJECT_PATH" "$BRANCH" origin/main
-```
+仓库没有 `origin/HEAD` 时，要求用户明确指定基础分支。
 
 脚本输出 `WORKTREE_PATH` 和 `WORKTREE_UNITY_PROJECT_PATH`。后续所有修改、Review、测试、提交和推送都在 worktree 中执行。
 
-不得切换原仓库分支，不得清理、删除或复用未知 worktree。
+指定的基础分支只作为新修复分支的起点。不得在基础分支上修改、提交、合并、变基、重置或推送；不得切换原仓库分支，不得清理、删除或复用未知 worktree。
 
 ## 修复
 
