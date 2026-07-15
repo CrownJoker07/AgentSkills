@@ -50,6 +50,14 @@ skills-ref validate ./skill-name
 
 校验通过不代表内容设计一定有效；仍需确认描述能够准确触发 Skill、指令可以完成目标任务，并且资源引用有效。
 
+## 安装到 Hermes
+
+运行根目录安装脚本，将仓库内的 Skill 软链接到 `~/.hermes/skills/ZZWAgentSkills/`：
+
+```bash
+./install.sh
+```
+
 ## 参考
 
 - [Agent Skills Specification](https://agentskills.io/specification)
