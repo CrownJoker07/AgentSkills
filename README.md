@@ -4,7 +4,7 @@
 
 ## 仓库内容
 
-- [`unity-bugfix`](unity-bugfix/SKILL.md)：诊断和修复 Git 管理的 Unity 项目 BUG。
+- [`unity-feishu-special`](unity-feishu-special/SKILL.md)：从飞书卡片处理 Unity BUG，并在卡片话题内回复。
 
 ## Skill 结构
 
