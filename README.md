@@ -53,7 +53,7 @@ skills-ref validate ./skill-name
 
 ## 安装到 Nanobot
 
-运行根目录安装脚本，将仓库内的 Skill 软链接到 `~/.nanobot/workspace/skills/`：
+运行根目录安装脚本，将仓库内的 Skill 软链接到 `~/.nanobot/workspace/skills/ZZWCustomSkill/`：
 
 ```bash
 ./install.sh
