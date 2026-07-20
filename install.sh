@@ -3,7 +3,7 @@
 set -eu
 
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-install_dir="$HOME/.nanobot/workspace/skills/ZZWCustomSkill"
+install_dir="$HOME/.nanobot/workspace/skills"
 
 mkdir -p "$install_dir"
 
