@@ -6,7 +6,7 @@
 
 - [`repo-bugfix`](repo-bugfix/SKILL.md)：诊断和修复 Git 代码仓库中的 BUG，并通过独立 worktree 完成交付。
 - [`feishu-card-thread`](feishu-card-thread/SKILL.md)：读取飞书卡片上下文，并在原卡片话题内持续通信。
-- [`interview-questions`](interview-questions/SKILL.md)：根据用户粘贴的简历文本，按岗位方向生成分类分组的面试题目清单。
+- [`interview-questions`](interview-questions/SKILL.md)：支持粘贴文本或导入本地 PDF 简历，先总结简历、再基于原简历按岗位方向生成分类分组的面试题目清单，并使用 lark-cli 写入飞书云文档（每道题为可勾选待办项）。
 
 ## Skill 结构
 
