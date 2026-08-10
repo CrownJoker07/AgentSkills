@@ -36,6 +36,11 @@ if ! git check-ref-format --branch "$BRANCH_NAME" >/dev/null 2>&1; then
     exit 1
 fi
 
+if [ -n "$(git -C "$REPO_ROOT" status --porcelain)" ]; then
+    echo "Error: repository working tree is not clean" >&2
+    exit 1
+fi
+
 if ! git -C "$REPO_ROOT" fetch origin >/dev/null 2>&1; then
     echo "Error: unable to fetch origin" >&2
     exit 1
@@ -44,6 +49,39 @@ fi
 QUERY_REF="refs/remotes/origin/$BRANCH_NAME"
 if ! COMMIT_ID=$(git -C "$REPO_ROOT" rev-parse --verify "$QUERY_REF^{commit}" 2>/dev/null); then
     echo "Error: remote branch does not exist: origin/$BRANCH_NAME" >&2
+    exit 1
+fi
+
+LOCAL_REF="refs/heads/$BRANCH_NAME"
+if git -C "$REPO_ROOT" show-ref --verify --quiet "$LOCAL_REF"; then
+    if ! git -C "$REPO_ROOT" merge-base --is-ancestor "$LOCAL_REF" "$QUERY_REF"; then
+        echo "Error: local branch cannot be fast-forwarded: $BRANCH_NAME" >&2
+        exit 1
+    fi
+
+    if ! git -C "$REPO_ROOT" switch "$BRANCH_NAME" >/dev/null 2>&1; then
+        echo "Error: unable to switch branch: $BRANCH_NAME" >&2
+        exit 1
+    fi
+
+    if ! git -C "$REPO_ROOT" merge --ff-only "$QUERY_REF" >/dev/null 2>&1; then
+        echo "Error: unable to fast-forward branch: $BRANCH_NAME" >&2
+        exit 1
+    fi
+else
+    if ! git -C "$REPO_ROOT" switch --track -c "$BRANCH_NAME" "$QUERY_REF" >/dev/null 2>&1; then
+        echo "Error: unable to create local tracking branch: $BRANCH_NAME" >&2
+        exit 1
+    fi
+fi
+
+if ! WORKTREE_COMMIT=$(git -C "$REPO_ROOT" rev-parse --verify HEAD 2>/dev/null); then
+    echo "Error: unable to verify working tree commit" >&2
+    exit 1
+fi
+
+if [ "$WORKTREE_COMMIT" != "$COMMIT_ID" ]; then
+    echo "Error: working tree does not match remote branch: origin/$BRANCH_NAME" >&2
     exit 1
 fi
 
