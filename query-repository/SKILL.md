@@ -1,6 +1,6 @@
 ---
 name: query-repository
-description: 刷新并只读查询 Agent 当前可访问的 Git 仓库内容，根据指定分支或当前分支最新的远程源码、配置或仓库文档回答业务规则、数值、实现位置和行为问题，并给出相对文件路径与行号。用户要求“查一下某仓库”、“某功能的数值是多少”、“某规则在哪里定义”或其他需要从指定仓库取证的问题时使用。不用于修改工作区、合并代码或 BUG 修复。
+description: 刷新并只读查询 Agent 当前可访问的 Git 仓库内容，根据用户指定分支或默认 main 分支最新的远程源码、配置或仓库文档回答业务规则、数值、实现位置和行为问题，并给出相对文件路径与行号。用户要求“查一下某仓库”、“某功能的数值是多少”、“某规则在哪里定义”或其他需要从指定仓库取证的问题时使用。不用于修改工作区、合并代码或 BUG 修复。
 ---
 
 # Query Repository
@@ -27,27 +27,27 @@ description: 刷新并只读查询 Agent 当前可访问的 Git 仓库内容，�
 
 ## 刷新查询分支
 
-要求仓库存在 `origin`。用户指定分支时使用该分支；未指定时通过以下命令获取当前分支：
+要求仓库存在 `origin`。用户指定分支时使用该分支；未指定时将 `main` 设为查询分支。不读取、继承或切换到本地当前分支，因为它可能是修复分支或其他临时分支。
+
+确定查询分支后，从 Skill 根目录执行：
 
 ```bash
-git -C "$REPO_PATH" branch --show-current
+scripts/prepare-query.sh "$REPO_PATH" "$BRANCH"
 ```
 
-结果为空表示仓库处于 detached HEAD，此时要求用户指定分支。确定分支后执行：
+用户未指定分支时省略第二个参数，由脚本使用 `main`：
 
 ```bash
-git check-ref-format --branch "$BRANCH"
-git -C "$REPO_PATH" fetch origin
-git -C "$REPO_PATH" rev-parse --verify "refs/remotes/origin/$BRANCH^{commit}"
+scripts/prepare-query.sh "$REPO_PATH"
 ```
 
-将 `origin/$BRANCH` 作为唯一查询快照，记录其 commit ID。先从该快照重新读取适用的 `AGENTS.md`、`AGENT.md` 和仓库文档，再查询其他内容。不要查询本地工作区或本地分支，因为它们可能落后。
+脚本输出 `REPO_ROOT`、`BRANCH_NAME`、`QUERY_REF` 和 `COMMIT_ID`。将 `QUERY_REF` 作为唯一查询快照。先从该快照重新读取适用的 `AGENTS.md`、`AGENT.md` 和仓库文档，再查询其他内容。不要查询本地工作区或本地分支，因为它们可能落后。
 
-`fetch` 运行前遵守宿主 Agent 的网络与权限规则。认证、网络、`fetch` 或远程分支校验失败时停止并报告；不悄悄回退到可能过期的本地内容。不在输出中回显凭据或完整 remote URL。
+`fetch` 运行前遵守宿主 Agent 的网络与权限规则。认证、网络、`fetch` 或远程分支校验失败时停止并报告；默认的 `origin/main` 不存在时要求用户指定分支，不猜测 `master` 或其他分支。不悄悄回退到可能过期的本地内容。不在输出中回显凭据或完整 remote URL。
 
 ## 搜索与取证
 
-先使用 `git grep -n` 在 `origin/$BRANCH` 中搜索用户原词，再根据仓库的命名与技术栈扩展为直接相关的中英文同义词、类名、字段名、配置键和文件名。使用 `git ls-tree` 查找远程快照中的文件，使用 `git show "origin/$BRANCH:<relative-path>"` 读取内容。
+先使用 `git grep -n` 在 `QUERY_REF` 中搜索用户原词，再根据仓库的命名与技术栈扩展为直接相关的中英文同义词、类名、字段名、配置键和文件名。使用 `git ls-tree` 查找远程快照中的文件，使用 `git show "$QUERY_REF:<relative-path>"` 读取内容。
 
 只搜索该远程快照中 Git 跟踪的源码、配置、测试和文档，避免本地未跟踪文件、第三方依赖、缓存和构建产物干扰结果。
 
