@@ -1,6 +1,7 @@
 ---
 name: repo-bugfix
-description: 诊断和修复任意 Git 代码仓库中的 BUG。用户要求判断、分析或定位问题时执行只读诊断；用户明确要求修复时，在独立 Git worktree 中完成最小根因修复，经 Review 和相关测试后提交并推送。任务来自飞书卡片时与 feishu-card-thread 一起使用，但本 Skill 不读取或回复飞书消息。
+description: 诊断和修复 Git 仓库中的 BUG。分析请求只做只读诊断；用户明确要求修复时，在独立 worktree 中完成最小根因修复，经 Review 和测试后提交并推送。
+metadata: {"openclaw":{"requires":{"bins":["git"]}}}
 ---
 
 # Repository Bugfix
@@ -30,14 +31,12 @@ git -C "$REPO_PATH" status --short --branch
 
 检查材料是否包含凭据、个人数据、内部地址、私有代码或业务数据。不得在命令、日志、回复或提交中回显敏感值，只使用完成当前 BUG 所需的最小材料。
 
-任务来自飞书卡片时，将需要补充的问题、阶段进度和最终结果交给 `feishu-card-thread` 发送；本 Skill 不直接操作飞书。
-
 ## 创建诊断 Worktree
 
-用户指定基础分支时优先使用；否则使用 `origin/HEAD`。将用户指定的分支解析为 `origin/<基础分支>`。从 Skill 根目录运行：
+用户指定基础分支时优先使用；否则使用 `origin/HEAD`。将用户指定的分支解析为 `origin/<基础分支>`。使用 Skill 自身目录中的脚本运行：
 
 ```bash
-scripts/prepare-diagnosis.sh "$REPO_PATH" "$WORKSPACE_ROOT" "$BASE_REF"
+"{baseDir}/scripts/prepare-diagnosis.sh" "$REPO_PATH" "$WORKSPACE_ROOT" "$BASE_REF"
 ```
 
 使用 `origin/HEAD` 时省略第三个参数。脚本 fetch `origin`，然后在 `<workspace>/worktrees/bugfix/<repo>/diagnosis-<unique-run-id>` 中创建 detached worktree，输出 `BASE_REF`、`BASE_COMMIT` 和 `DIAGNOSTIC_PATH`。
@@ -74,15 +73,15 @@ scripts/prepare-diagnosis.sh "$REPO_PATH" "$WORKSPACE_ROOT" "$BASE_REF"
 
 分支命名优先遵循仓库约定，没有约定时使用 `fix/<bug-name>`。同名本地或远程分支已存在时追加 `YYYYMMDD-HHMM`。
 
-使用诊断脚本输出的 `BASE_COMMIT` 作为修复分支起点，从 Skill 根目录运行：
+使用诊断脚本输出的 `BASE_COMMIT` 作为修复分支起点，运行：
 
 ```bash
-scripts/create-worktree.sh "$REPO_PATH" "$WORKSPACE_ROOT" "$BRANCH" "$BASE_COMMIT"
+"{baseDir}/scripts/create-worktree.sh" "$REPO_PATH" "$WORKSPACE_ROOT" "$BRANCH" "$BASE_COMMIT"
 ```
 
 脚本输出 `WORKTREE_PATH`。后续修改、Review、测试、提交和推送全部在该 worktree 中执行。
 
-修复 worktree 创建成功后，使用 `scripts/cleanup-diagnosis.sh "$REPO_PATH" "$WORKSPACE_ROOT" "$DIAGNOSTIC_PATH"` 移除干净的诊断 worktree。用户只要求诊断或任务在诊断阶段停止时，也必须在输出结果前执行该清理脚本。清理脚本不使用 `--force`；失败时保留路径并报告。
+修复 worktree 创建成功后，使用 `"{baseDir}/scripts/cleanup-diagnosis.sh" "$REPO_PATH" "$WORKSPACE_ROOT" "$DIAGNOSTIC_PATH"` 移除干净的诊断 worktree。用户只要求诊断或任务在诊断阶段停止时，也必须在输出结果前执行该清理脚本。清理脚本不使用 `--force`；失败时保留路径并报告。
 
 基础 commit 只作为新分支起点。不得切换或修改 `repos/<repo>` 的分支，不得清理、删除或复用未知 worktree。
 
@@ -129,4 +128,4 @@ git -C "$WORKTREE_PATH" push -u origin "$BRANCH"
 
 报告状态、BUG 名称、根因与证据、修改内容、分支和文件、Review 结论、测试命令与结果、未执行项、推送结果、遗留问题和人工检查风险。
 
-失败时额外说明失败阶段、具体错误、是否修改、是否提交、是否推送和 worktree 路径。任务来自飞书卡片时，将必要摘要交给 `feishu-card-thread`，不得包含凭据、完整内部路径、未经处理的日志或无关代码。
+失败时额外说明失败阶段、具体错误、是否修改、是否提交、是否推送和 worktree 路径。

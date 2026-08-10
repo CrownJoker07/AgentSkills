@@ -1,14 +1,13 @@
 # Agent Skills
 
-这是一个个人自定义 Agent Skill 仓库。仓库内的 Skill 严格遵循 [Agent Skills Specification](https://agentskills.io/specification)；该规范是本仓库关于 Skill 格式与结构的权威来源。
+这是一个面向 OpenClaw 的个人 Agent Skill 仓库。Skill 遵循 [Agent Skills Specification](https://agentskills.io/specification)，并使用 OpenClaw 的依赖门控和 `{baseDir}` 路径约定。
 
 ## 仓库内容
 
 - [`clone-repository`](clone-repository/SKILL.md)：将指定 Git 仓库的指定分支克隆到当前 Agent workspace 的 `repos/` 目录，不绑定具体 Agent 产品或本机路径。
 - [`repo-bugfix`](repo-bugfix/SKILL.md)：诊断和修复 Git 代码仓库中的 BUG，并通过独立 worktree 完成交付。
 - [`query-repository`](query-repository/SKILL.md)：只读定位当前可访问的本地 Git 仓库，从源码、配置或文档中查询业务规则和数值，并给出文件行号证据。
-- [`feishu-card-thread`](feishu-card-thread/SKILL.md)：读取飞书卡片上下文，并在原卡片话题内持续通信。
-- [`interview-questions`](interview-questions/SKILL.md)：支持粘贴文本、本地 PDF 或飞书消息附件三种输入，先总结简历、再基于原简历按固定骨架（候选人信息 / 简历总结 / 岗位匹配度分析 / 六大分类面试题 / 面试官备注）生成清单，并使用 lark-cli 写入飞书云文档（每道题为可勾选待办项，含动机与职业规划分类）；收到简历后直接走完全流程，不反问是否继续。
+- [`interview-questions`](interview-questions/SKILL.md)：读取文本或 PDF 简历，按固定骨架总结候选人、分析岗位匹配度并生成带考点的面试题清单。
 
 ## Skill 结构
 
@@ -39,7 +38,7 @@ description: 说明该 Skill 能做什么，以及应在何时使用。
 
 - `name` 必填，长度为 1–64 个字符，只能包含小写字母、数字和连字符；不得以连字符开头或结尾，不得包含连续连字符，并且必须与 Skill 目录名一致。
 - `description` 必填，长度为 1–1024 个字符，必须同时描述 Skill 的能力和适用场景。
-- `license`、`compatibility`、`metadata` 和实验性的 `allowed-tools` 可按官方规范选填。
+- `metadata.openclaw` 用于声明 OpenClaw 运行所需的二进制、环境变量或配置。
 - Markdown 正文用于编写 Agent 执行任务所需的指令。完整正文会在 Skill 激活后载入，官方建议 `SKILL.md` 少于 500 行。
 - 大段细节应拆分到按需读取的资源文件中，并从 `SKILL.md` 使用相对于 Skill 根目录的路径直接引用，避免深层引用链。
 - `scripts/`、`references/` 和 `assets/` 仅在 Skill 实际需要时创建。
@@ -54,15 +53,29 @@ skills-ref validate ./skill-name
 
 校验通过不代表内容设计一定有效；仍需确认描述能够准确触发 Skill、指令可以完成目标任务，并且资源引用有效。
 
-## 安装到 Nanobot
+## 安装到 OpenClaw
 
-运行根目录安装脚本，将仓库内的 Skill 软链接到 `~/.nanobot/workspace/skills/ZZWCustomSkill/`：
+安装脚本使用 OpenClaw CLI 将仓库内的 Skill 安装到当前活动 workspace：
 
 ```bash
 ./install.sh
+```
+
+也可以单独安装：
+
+```bash
+openclaw skills install ./repo-bugfix
+```
+
+安装后检查可见性和依赖：
+
+```bash
+openclaw skills list
+openclaw skills check
 ```
 
 ## 参考
 
 - [Agent Skills Specification](https://agentskills.io/specification)
 - [Agent Skills 官方仓库](https://github.com/agentskills/agentskills)
+- [OpenClaw Skills](https://docs.openclaw.ai/skills)

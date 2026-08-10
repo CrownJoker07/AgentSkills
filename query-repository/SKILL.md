@@ -1,6 +1,7 @@
 ---
 name: query-repository
-description: 在独立 Git worktree 中查询 Agent 当前可访问的仓库，根据用户指定分支或默认 main 分支最新的远程源码、配置或仓库文档回答业务规则、数值、实现位置和行为问题，并给出相对文件路径与行号。用户要求“查一下某仓库”、“某功能的数值是多少”、“某规则在哪里定义”或其他需要从指定仓库取证的问题时使用。不用于编辑代码、合并代码或 BUG 修复。
+description: 在独立 Git worktree 中只读查询远程仓库源码、配置或文档，并给出 commit、文件和行号证据。用于从指定仓库查询规则、数值、位置或行为；不用于修改代码。
+metadata: {"openclaw":{"requires":{"bins":["git"]}}}
 ---
 
 # Query Repository
@@ -29,16 +30,16 @@ description: 在独立 Git worktree 中查询 Agent 当前可访问的仓库，�
 
 要求仓库存在 `origin`。用户指定分支时使用该分支；未指定时将 `main` 设为查询分支。不继承本地当前分支，因为它可能是修复分支或其他临时分支。
 
-确定查询分支后，从 Skill 根目录执行：
+确定查询分支后，使用 Skill 自身目录中的脚本执行：
 
 ```bash
-scripts/prepare-query.sh "$REPO_PATH" "$WORKSPACE_ROOT" "$BRANCH"
+"{baseDir}/scripts/prepare-query.sh" "$REPO_PATH" "$WORKSPACE_ROOT" "$BRANCH"
 ```
 
 用户未指定分支时省略第三个参数，由脚本使用 `main`：
 
 ```bash
-scripts/prepare-query.sh "$REPO_PATH" "$WORKSPACE_ROOT"
+"{baseDir}/scripts/prepare-query.sh" "$REPO_PATH" "$WORKSPACE_ROOT"
 ```
 
 脚本 fetch `origin`，然后在 `<workspace>/worktrees/query/<repo>/<unique-run-id>` 中从 `origin/$BRANCH` 创建独立 detached worktree。脚本输出 `REPO_ROOT`、`BRANCH_NAME`、`QUERY_REF`、`COMMIT_ID` 和 `WORKTREE_PATH`。后续所有文件读取和搜索都在 `WORKTREE_PATH` 中执行。
@@ -64,7 +65,7 @@ scripts/prepare-query.sh "$REPO_PATH" "$WORKSPACE_ROOT"
 完成读取和取证后、输出最终回答前，执行：
 
 ```bash
-scripts/cleanup-query.sh "$REPO_PATH" "$WORKSPACE_ROOT" "$WORKTREE_PATH"
+"{baseDir}/scripts/cleanup-query.sh" "$REPO_PATH" "$WORKSPACE_ROOT" "$WORKTREE_PATH"
 ```
 
 清理脚本只允许移除当前仓库在 `<workspace>/worktrees/query/<repo>` 下已登记且干净的 worktree，不使用 `--force`。清理失败时保留 worktree 并在结果中报告，不扩大删除范围。

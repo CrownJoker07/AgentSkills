@@ -1,6 +1,7 @@
 ---
 name: clone-repository
-description: 将用户指定的 Git 仓库地址和分支克隆到当前 Agent workspace 根目录下的 repos/ 目录，供后续仓库查询、诊断或修复 Skill 使用。用户要求克隆、下载、准备或拉取某个远程仓库的指定分支时使用。只负责首次克隆，不更新、覆盖或删除已存在的本地仓库。
+description: 将用户指定的 Git 仓库和分支首次克隆到当前 workspace 的 repos/ 目录。用户要求克隆、下载或准备远程仓库时使用；不更新或覆盖已有仓库。
+metadata: {"openclaw":{"requires":{"bins":["git"]}}}
 ---
 
 # Clone Repository
