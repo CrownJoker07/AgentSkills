@@ -5,7 +5,7 @@ description: 诊断和修复任意 Git 代码仓库中的 BUG。用户要求判�
 
 # Repository Bugfix
 
-按照“确认仓库 → 读取材料 → 诊断 → 授权门槛 → 创建 worktree → 修复 → Review → 测试 → 提交推送”的顺序处理 BUG。
+按照“确认仓库 → 读取材料 → 创建诊断 worktree → 诊断 → 授权门槛 → 创建修复 worktree → 修复 → Review → 测试 → 提交推送”的顺序处理 BUG。不切换、更新或读取 `<workspace>/repos/<repo>` 的工作区内容。
 
 ## 确认仓库
 
@@ -13,14 +13,14 @@ description: 诊断和修复任意 Git 代码仓库中的 BUG。用户要求判�
 
 不要扫描整个用户目录、磁盘、其他常用目录或未向 Agent 公开的路径；不做部分匹配，不猜测项目，不选择名称相近的仓库。
 
-解析绝对路径并读取仓库说明、适用的 `AGENTS.md`、依赖清单、CI 配置和测试约定。检查仓库状态：
+解析绝对路径。检查仓库状态：
 
 ```bash
 git -C "$REPO_PATH" rev-parse --show-toplevel
 git -C "$REPO_PATH" status --short --branch
 ```
 
-目录不是 Git 仓库，或仓库没有 `origin` 时，只允许诊断，不执行完整修复流程。
+目录不是 Git 仓库或仓库没有 `origin` 时停止，报告无法从最新远程快照创建诊断 worktree。
 
 ## 读取材料
 
@@ -31,6 +31,18 @@ git -C "$REPO_PATH" status --short --branch
 检查材料是否包含凭据、个人数据、内部地址、私有代码或业务数据。不得在命令、日志、回复或提交中回显敏感值，只使用完成当前 BUG 所需的最小材料。
 
 任务来自飞书卡片时，将需要补充的问题、阶段进度和最终结果交给 `feishu-card-thread` 发送；本 Skill 不直接操作飞书。
+
+## 创建诊断 Worktree
+
+用户指定基础分支时优先使用；否则使用 `origin/HEAD`。将用户指定的分支解析为 `origin/<基础分支>`。从 Skill 根目录运行：
+
+```bash
+scripts/prepare-diagnosis.sh "$REPO_PATH" "$WORKSPACE_ROOT" "$BASE_REF"
+```
+
+使用 `origin/HEAD` 时省略第三个参数。脚本 fetch `origin`，然后在 `<workspace>/worktrees/bugfix/<repo>/diagnosis-<unique-run-id>` 中创建 detached worktree，输出 `BASE_REF`、`BASE_COMMIT` 和 `DIAGNOSTIC_PATH`。
+
+在 `DIAGNOSTIC_PATH` 中读取仓库说明、适用的 `AGENTS.md`、依赖清单、CI 配置、测试约定和相关源码。后续诊断全部在该 worktree 中执行。
 
 ## 诊断
 
@@ -53,32 +65,26 @@ git -C "$REPO_PATH" status --short --branch
 
 ## 授权门槛
 
-- 用户只要求判断、分析或定位：只输出诊断，不创建 worktree，不修改、提交或推送。
+- 用户只要求判断、分析或定位：只输出诊断，不创建修复分支，不修改、提交或推送。
 - 用户明确要求修复：创建 worktree，并在 Review 和测试通过后提交、推送分支。
 
 不要把诊断请求自动升级为修复。当前 Agent 或运行环境的更高优先级授权规则始终优先。
 
 ## 创建 Worktree
 
-用户指定基础分支时优先使用；否则遵循仓库文档；仍未指定时使用 `origin/HEAD`。不得猜测名称相近的分支。
-
 分支命名优先遵循仓库约定，没有约定时使用 `fix/<bug-name>`。同名本地或远程分支已存在时追加 `YYYYMMDD-HHMM`。
 
-将用户指定的基础分支解析为 `origin/<基础分支>`，从 Skill 根目录运行：
+使用诊断脚本输出的 `BASE_COMMIT` 作为修复分支起点，从 Skill 根目录运行：
 
 ```bash
-scripts/create-worktree.sh "$REPO_PATH" "$BRANCH" "origin/$BASE_BRANCH"
-```
-
-使用 `origin/HEAD` 时省略第三个参数：
-
-```bash
-scripts/create-worktree.sh "$REPO_PATH" "$BRANCH"
+scripts/create-worktree.sh "$REPO_PATH" "$WORKSPACE_ROOT" "$BRANCH" "$BASE_COMMIT"
 ```
 
 脚本输出 `WORKTREE_PATH`。后续修改、Review、测试、提交和推送全部在该 worktree 中执行。
 
-基础分支只作为新分支起点。不得切换或修改原仓库分支，不得清理、删除或复用未知 worktree。
+修复 worktree 创建成功后，使用 `scripts/cleanup-diagnosis.sh "$REPO_PATH" "$WORKSPACE_ROOT" "$DIAGNOSTIC_PATH"` 移除干净的诊断 worktree。用户只要求诊断或任务在诊断阶段停止时，也必须在输出结果前执行该清理脚本。清理脚本不使用 `--force`；失败时保留路径并报告。
+
+基础 commit 只作为新分支起点。不得切换或修改 `repos/<repo>` 的分支，不得清理、删除或复用未知 worktree。
 
 ## 修复
 

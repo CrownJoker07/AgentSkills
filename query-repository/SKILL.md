@@ -1,11 +1,11 @@
 ---
 name: query-repository
-description: 切换并同步 Agent 当前可访问的 Git 仓库，再根据用户指定分支或默认 main 分支最新的远程源码、配置或仓库文档回答业务规则、数值、实现位置和行为问题，并给出相对文件路径与行号。用户要求“查一下某仓库”、“某功能的数值是多少”、“某规则在哪里定义”或其他需要从指定仓库取证的问题时使用。不用于编辑代码、非快进合并或 BUG 修复。
+description: 在独立 Git worktree 中查询 Agent 当前可访问的仓库，根据用户指定分支或默认 main 分支最新的远程源码、配置或仓库文档回答业务规则、数值、实现位置和行为问题，并给出相对文件路径与行号。用户要求“查一下某仓库”、“某功能的数值是多少”、“某规则在哪里定义”或其他需要从指定仓库取证的问题时使用。不用于编辑代码、合并代码或 BUG 修复。
 ---
 
 # Query Repository
 
-按照“定位仓库 → 读取约束 → 切换并同步查询分支 → 搜索证据 → 验证结论 → 带来源回答”的顺序执行。
+按照“定位仓库 → 读取约束 → 创建查询 worktree → 搜索证据 → 验证结论 → 清理 worktree → 带来源回答”的顺序执行。不切换、更新或读取 `<workspace>/repos/<repo>` 的工作区内容。
 
 ## 定位仓库
 
@@ -21,35 +21,33 @@ description: 切换并同步 Agent 当前可访问的 Git 仓库，再根据用�
 
 ## 读取仓库约束
 
-读取仓库根目录以及相关文件路径适用的 `AGENTS.md`、`AGENT.md` 和仓库文档。遵守其中的访问、敏感信息和生成文件约束。
+创建 worktree 前只读取运行环境已经提供的全局约束，不从 `repos/<repo>` 工作区读取可能属于其他分支的仓库文件。查询 worktree 创建后，从其中读取适用的 `AGENTS.md`、`AGENT.md` 和仓库文档，并遵守其中的访问、敏感信息和生成文件约束。
 
-只执行读取、搜索、Git 元数据检查和下述脚本中的 fetch、switch 与 fast-forward。不编辑文件，不安装依赖，不执行非快进 merge、rebase、reset 或强制切换。
+只执行读取、搜索、Git 元数据检查、fetch 和查询 worktree 的创建与清理。不编辑代码，不安装依赖，不执行 switch、merge、rebase、reset 或强制删除。
 
-## 刷新查询分支
+## 创建查询 Worktree
 
 要求仓库存在 `origin`。用户指定分支时使用该分支；未指定时将 `main` 设为查询分支。不继承本地当前分支，因为它可能是修复分支或其他临时分支。
 
 确定查询分支后，从 Skill 根目录执行：
 
 ```bash
-scripts/prepare-query.sh "$REPO_PATH" "$BRANCH"
+scripts/prepare-query.sh "$REPO_PATH" "$WORKSPACE_ROOT" "$BRANCH"
 ```
 
-用户未指定分支时省略第二个参数，由脚本使用 `main`：
+用户未指定分支时省略第三个参数，由脚本使用 `main`：
 
 ```bash
-scripts/prepare-query.sh "$REPO_PATH"
+scripts/prepare-query.sh "$REPO_PATH" "$WORKSPACE_ROOT"
 ```
 
-脚本要求工作区干净，然后 fetch `origin`、切换到目标本地分支，并仅以 fast-forward 方式同步到 `origin/$BRANCH`。本地分支不存在时，从远程分支创建 tracking branch。工作区不干净、分支分叉、目标分支被其他 worktree 占用或无法快进时停止，不 stash、不强制切换、不重置。
-
-脚本输出 `REPO_ROOT`、`BRANCH_NAME`、`QUERY_REF` 和 `COMMIT_ID`。执行成功后，工作区已位于目标分支且 `HEAD` 与 `COMMIT_ID` 一致。将 `QUERY_REF` 作为唯一查询快照。先从该快照重新读取适用的 `AGENTS.md`、`AGENT.md` 和仓库文档，再查询其他内容。
+脚本 fetch `origin`，然后在 `<workspace>/worktrees/query/<repo>/<unique-run-id>` 中从 `origin/$BRANCH` 创建独立 detached worktree。脚本输出 `REPO_ROOT`、`BRANCH_NAME`、`QUERY_REF`、`COMMIT_ID` 和 `WORKTREE_PATH`。后续所有文件读取和搜索都在 `WORKTREE_PATH` 中执行。
 
 `fetch` 运行前遵守宿主 Agent 的网络与权限规则。认证、网络、`fetch` 或远程分支校验失败时停止并报告；默认的 `origin/main` 不存在时要求用户指定分支，不猜测 `master` 或其他分支。不悄悄回退到可能过期的本地内容。不在输出中回显凭据或完整 remote URL。
 
 ## 搜索与取证
 
-先使用 `git grep -n` 在 `QUERY_REF` 中搜索用户原词，再根据仓库的命名与技术栈扩展为直接相关的中英文同义词、类名、字段名、配置键和文件名。使用 `git ls-tree` 查找远程快照中的文件，使用 `git show "$QUERY_REF:<relative-path>"` 读取内容。
+先使用 `rg` 在 `WORKTREE_PATH` 中搜索用户原词，再根据仓库的命名与技术栈扩展为直接相关的中英文同义词、类名、字段名、配置键和文件名。
 
 只搜索该远程快照中 Git 跟踪的源码、配置、测试和文档，避免本地未跟踪文件、第三方依赖、缓存和构建产物干扰结果。
 
@@ -60,6 +58,16 @@ scripts/prepare-query.sh "$REPO_PATH"
 - 运行时由服务端、远程配置或外部数据提供，无法仅从当前仓库确定的值。
 
 不把注释、测试样例、过期文档或生成产物中的数值单独当作最终结论。证据冲突时，继续追踪实际读取链路；仍无法确定时报告冲突，不自行选值。
+
+## 清理 Query Worktree
+
+完成读取和取证后、输出最终回答前，执行：
+
+```bash
+scripts/cleanup-query.sh "$REPO_PATH" "$WORKSPACE_ROOT" "$WORKTREE_PATH"
+```
+
+清理脚本只允许移除当前仓库在 `<workspace>/worktrees/query/<repo>` 下已登记且干净的 worktree，不使用 `--force`。清理失败时保留 worktree 并在结果中报告，不扩大删除范围。
 
 ## 回答
 
