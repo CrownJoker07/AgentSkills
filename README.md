@@ -4,6 +4,7 @@
 
 ## 仓库内容
 
+- [`clone-repository`](clone-repository/SKILL.md)：将指定 Git 仓库的指定分支克隆到当前 Agent workspace 的 `repos/` 目录，不绑定具体 Agent 产品或本机路径。
 - [`repo-bugfix`](repo-bugfix/SKILL.md)：诊断和修复 Git 代码仓库中的 BUG，并通过独立 worktree 完成交付。
 - [`query-repository`](query-repository/SKILL.md)：只读定位当前可访问的本地 Git 仓库，从源码、配置或文档中查询业务规则和数值，并给出文件行号证据。
 - [`feishu-card-thread`](feishu-card-thread/SKILL.md)：读取飞书卡片上下文，并在原卡片话题内持续通信。

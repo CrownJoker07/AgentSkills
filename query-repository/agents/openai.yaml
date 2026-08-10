@@ -1,4 +1,0 @@
-interface:
-  display_name: "Repository Query"
-  short_description: "Query local repositories with source-backed answers"
-  default_prompt: "Use $query-repository to answer a question from a local repository with file and line evidence."
