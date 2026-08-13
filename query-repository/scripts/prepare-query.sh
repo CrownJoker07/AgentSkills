@@ -36,12 +36,12 @@ if ! git check-ref-format --branch "$BRANCH_NAME" >/dev/null 2>&1; then
     exit 1
 fi
 
-if ! git -C "$REPO_ROOT" fetch origin >/dev/null 2>&1; then
-    echo "Error: unable to fetch origin" >&2
+QUERY_REF="refs/remotes/origin/$BRANCH_NAME"
+if ! git -C "$REPO_ROOT" fetch origin "+refs/heads/$BRANCH_NAME:$QUERY_REF" >/dev/null 2>&1; then
+    echo "Error: unable to fetch origin/$BRANCH_NAME" >&2
     exit 1
 fi
 
-QUERY_REF="refs/remotes/origin/$BRANCH_NAME"
 if ! COMMIT_ID=$(git -C "$REPO_ROOT" rev-parse --verify "$QUERY_REF^{commit}" 2>/dev/null); then
     echo "Error: remote branch does not exist: origin/$BRANCH_NAME" >&2
     exit 1

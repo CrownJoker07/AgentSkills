@@ -24,7 +24,7 @@ metadata: {"openclaw":{"requires":{"bins":["git"]}}}
 
 要求仓库存在 `origin`。用户指定分支时使用该分支；未指定时使用 `main`，不继承本地当前分支。
 
-使用 Skill 自身目录中的脚本 fetch 并解析远程快照：
+使用 Skill 自身目录中的脚本自动 fetch 指定远程分支的最新提交，并解析远程快照：
 
 ```bash
 "{baseDir}/scripts/prepare-query.sh" "$REPO_PATH" "$BRANCH"
@@ -36,7 +36,7 @@ metadata: {"openclaw":{"requires":{"bins":["git"]}}}
 "{baseDir}/scripts/prepare-query.sh" "$REPO_PATH"
 ```
 
-脚本输出 `REPO_ROOT`、`BRANCH_NAME`、`QUERY_REF` 和 `COMMIT_ID`。`QUERY_REF` 固定指向刚 fetch 的 `refs/remotes/origin/<branch>`；后续查询只针对该 ref，不使用本地分支或工作区文件。
+脚本显式将 `refs/heads/<branch>` fetch 到 `refs/remotes/origin/<branch>`，不依赖仓库现有的 fetch refspec。脚本输出 `REPO_ROOT`、`BRANCH_NAME`、`QUERY_REF` 和 `COMMIT_ID`。`QUERY_REF` 固定指向刚 fetch 的远程分支最新提交；后续查询只针对该 ref，不使用本地分支或工作区文件。
 
 `fetch` 运行前遵守宿主 Agent 的网络与权限规则。认证、网络、`fetch` 或远程分支校验失败时停止并报告；默认的 `origin/main` 不存在时要求用户指定分支，不猜测 `master` 或其他分支，不回退到可能过期的本地内容。
 
