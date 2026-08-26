@@ -88,7 +88,7 @@ Distinguish the kind of claim before weighing evidence:
 
 ## Analysis Depth
 
-Each feature page, where applicable, includes these three analyses, **evidence-grounded** (config fields, Prefab components, event keys); never fabricate values or business intent.
+Each feature page must cover all applicable analyses below, **evidence-grounded** by configuration, assets, protocols, and code. Do not silently omit an applicable analysis: mark it `Not applicable` with a reason, or `Blocked` with the missing source or extraction problem. Never fabricate values, behavior, or business intent.
 
 1. **Monetization analysis** — for every pay point, write the concrete **price, reward, and unlock path**; an abstract "pay point / evidence / positioning" row alone is not acceptable.
    - **获取/解锁路径**:免费边界与付费起点、解锁货币类型、消耗递增曲线(首/中/末或全档)。
@@ -96,11 +96,16 @@ Each feature page, where applicable, includes these three analyses, **evidence-g
    - **奖励内容**:每档/每礼包给出的具体道具与数量;若主表仅含 `Id` 等无奖励字段,必须追踪关联表写出实际奖励,禁止只写"N 个档位/N 条"了事。
    - 在此基础上再做 layering/funnel(免费→付费→鲸鱼、IAP 加档、双轨通行证、货币沉淀、短促充值)。
 2. **Values analysis** — **write extractable real numbers into the doc** (counts, durations, probabilities, level thresholds, scaling series, grid sizes). Do not leave a "needs parsing" placeholder.
-   - 商业化与解锁相关曲线(解锁消耗、礼包价格、奖励数量、档位/成就条件阈值)必须**完整提取首/中/末或全档**,禁止只写首条后用省略号掩盖全部,也禁止只写条数/档位数而不列具体数值。
+   - 关键档位和条目逐条列出数值，不只写区间或条数。商业化与解锁相关曲线（解锁消耗、礼包价格、奖励数量、档位或成就条件阈值）必须完整提取首/中/末或全档，禁止只写首条后用省略号代替，也禁止只写条数或档位数而不列具体数值。
    - Prefer directly readable sources (JSON/text data files) over binary tables.
    - For binary config tables, **read the repo's loader/deserializer code first** to recover the schema, then extract values.
    - Only mark "needs parsing / unverifiable" after reading the loader code and still failing—and state the blocker (which table, which field). Never fabricate numbers.
-3. **Mechanism highlights** — point out non-obvious design patterns (feedback loops, social hooks, retention mechanics, A/B schema variants, pity systems); separate documented facts from analytical inference.
+3. **Implementation analysis** — document the behavior that configuration alone cannot explain.
+   - **Global parameters**: search global or shared configuration for feature-specific constants such as unlock counts, refresh intervals, probability tiers, purchase limits, and thresholds. Record relevant names and values; do not assume one fixed filename or naming prefix across repositories.
+   - **Runtime logic**: inspect configuration loaders, feature modules, state models, UI presenters/controllers, and client-server protocol handlers. Describe state transitions and their conditions, validation ownership, important feedback loops, and other behavior that materially changes the feature. Cite repository paths and line numbers when useful.
+   - **Protocol flow**: trace the relevant request, response, event, or push-message chain when behavior depends on server interaction. Identify which decisions are client-side, server-authoritative, or unverifiable from the repository.
+   - **Related-data traversal**: when a primary table contains only an identifier, follow loader code and referenced tables to recover the actual item, reward, price, or condition. If the value is supplied only at runtime and neither code nor repository data resolves it, mark it `Blocked` and state why.
+4. **Mechanism highlights** — point out non-obvious design patterns (feedback loops, social hooks, retention mechanics, A/B schema variants, pity systems); separate documented facts from analytical inference.
 
 > Separate fact from analysis: direct config/resource findings are facts; interpretations built on them are analysis. Do not exaggerate or infer business intent beyond the evidence.
 
