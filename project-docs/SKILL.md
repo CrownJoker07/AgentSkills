@@ -1,6 +1,6 @@
 ---
 name: project-docs
-description: Query, explain, create, update, or review authoritative Markdown documentation under this repository's docs/ directory. Use when answering project questions from the local knowledge base, tracing documented behavior to current code or configuration, documenting features, architecture, data, content, or operations, or keeping documentation aligned with a code/config change.
+description: Query, explain, create, update, or review authoritative Markdown documentation under this repository's docs/ directory, and perform evidence-grounded product or game-design analysis from project documentation and implementation evidence. Use when answering project questions, tracing documented behavior to code or configuration, maintaining documentation, or reviewing product value, game mechanics, balance, economy, monetization, or retention. Do not use generic design heuristics as evidence of project intent or behavior.
 ---
 
 # Project Docs
@@ -18,6 +18,28 @@ Treat `docs/` as the repository's authoritative knowledge base. Choose a read-on
    - `docs/operations/` — build, release, review, monitoring, operations.
    - `docs/competitors/` — external competitor research; **not authoritative project knowledge**. No freshness check applies; cite competitor/version/captured_at, and never use it to answer "how does this project implement X".
    - `docs/design/` — internal design thinking and proposals; **not authoritative project knowledge**. No freshness check applies; never cite as evidence of current behavior.
+
+## Product Analysis References
+
+Read only the references required by the request:
+
+- For game mechanics, core loops, player decisions, feedback, or system analysis, read `references/game-design-principles.md`.
+- For balance, progression, pacing, difficulty, counter systems, cost curves, or dominant strategies, read `references/game-balance.md`.
+- For feature or product review, first-time experience, user value, or feature completeness, read `references/product-review.md`.
+- For currencies, resources, rewards, sinks, pricing, progression economy, IAP, or ads, read `references/economy-design.md`.
+- For onboarding, retention, return loops, long-term engagement, content cadence, or cohort analysis, read `references/retention-design.md`.
+- Before giving product, design, balance, economy, monetization, or retention recommendations, read `references/evidence-and-recommendations.md`.
+- When provenance affects a conclusion, resolve reference IDs such as `[S011]` through `references/SOURCES.md`.
+
+Authoritative project evidence takes precedence over generic reference material. Use generic references to structure analysis, generate hypotheses, identify missing evidence, and design validation. Never use them to overwrite confirmed project facts, infer undocumented intent as fact, or claim player, retention, or monetization outcomes without relevant evidence.
+
+Distinguish the kind of claim before weighing evidence:
+
+- Use current code, configuration, server data, and runtime observation for implemented behavior.
+- Use approved project documents and decision records for intended behavior.
+- Use telemetry, experiments, playtests, interviews, and surveys for player behavior or experience.
+- Report intended and implemented behavior separately when they conflict.
+- Label analysis as fact, inference, hypothesis, recommendation, or validation.
 
 ## Query Documentation
 
