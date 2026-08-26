@@ -1,0 +1,4 @@
+interface:
+  display_name: "项目知识文档"
+  short_description: "查询并维护仓库内 docs Markdown 权威知识库"
+  default_prompt: "使用 $project-docs 查询项目知识，或根据当前代码和配置更新对应文档。"
