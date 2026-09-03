@@ -53,13 +53,14 @@ install_to_openclaw() {
     openclaw skills install "$skill_dir"
 }
 
-# 安装到 ~/.agents/skills：整目录覆盖式复制，保留 scripts/references/assets。
+# 安装到 ~/.agents/skills：软链接到仓库目录，仓库内改动即时生效。
+# rm -rf 兼容从旧版复制安装迁移过来的真实目录，ln -s 使用绝对路径，任意 cwd 均可用。
 install_to_agents() {
     skill_dir=$1
     dest="$HOME/.agents/skills/${skill_dir##*/}"
     mkdir -p "$HOME/.agents/skills"
     rm -rf "$dest"
-    cp -R "$skill_dir" "$dest"
+    ln -s "$skill_dir" "$dest"
 }
 
 # 主流程：先选目标，再选 skills。
