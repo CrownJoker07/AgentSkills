@@ -57,7 +57,7 @@ Distinguish the kind of claim before weighing evidence:
 ## Write Documentation
 
 1. Identify the requested behavior or changed implementation; inspect current code/config with targeted searches and reads.
-2. Reuse an existing authoritative page; update instead of creating overlapping docs.
+2. Reuse an existing authoritative page; update instead of creating overlapping docs. Before writing a number, read the `数字所有权` declarations of candidate pages to confirm which document owns that value type.
 3. Write only facts supported by the current repository. Reference repository paths in prose when they aid verification. Do not infer missing business intent.
 4. Add YAML frontmatter with exact repository-relative sources:
 
@@ -78,6 +78,25 @@ Distinguish the kind of claim before weighing evidence:
 8. Run the freshness checker. `PENDING` is expected while doc and sources update together; resolve `STALE`/`UNKNOWN` before completion.
 9. Review the doc diff with any related code/config change; keep them in one commit when behavior changed.
 
+### Numeric Ownership (写之前)
+
+- 每个配置数值（数量、Id 段、列表条目、阈值、档位分级等）只有一个权威文档，权威边界写在文档头部「数字所有权」声明里。
+- 新建文档必须先落该声明再写数值。格式：首个标题之后、正文之前，逐类列出本文档拥有权威归属的数值类型；不拥有任何数值的文档显式声明「不含权威数值，全部以链接引用」。
+- 声明未覆盖的数值类型，先定归属文档再写数，不允许「顺手抄一份」。
+
+> **数字所有权**：本文为「奖励档位数量」与「Id 分配区间」两类数值的权威文档。
+
+### Referencing Numbers (写的时候)
+
+- 引用他文档数值只允许链接（`文件#章节`）或 ≈ 约估量级（约/百量级），禁止复制精确值——写任何数之前先自问「这个数的权威文档是谁」。
+- 游戏/线上事实（代码常量、现网配置数据、发布包数据）可引用但须标注来源；与现网冲突时以现网为准并同步文档。
+- 权威文档内部「配置表与其导出镜像（TSV/快照表）」必须同文件同步改。
+- 撰写或提案奖励/礼包数量（尚未上线）时用「锚定 → 取整 → 成梯」：先按所属项目定义的价值公式（如「目标价值 ÷ 单位价值」）锚定量级，再在容差带（约 ±5%，该档带内确无整齐数时仅该档放宽至 ±10% 就近取整）内取 0/5 结尾或 {1, 2, 2.5, 5}×10ⁿ 系列的整齐数，两侧同可时取上取整；同批次各档须构成公比可辨（×2/×2.5/×5）的阶梯，且每档自身即为整齐数——同基数序列（如 11/33/55 共享基数 11）不得作为免于取整的借口。已上线的现网数值一律按原样记录（含 21/83/417 这类除法残渣），不得回写成整齐数。
+
+### Ownership Self-Check (写完之后)
+
+见「Verify Writes」。核心判据：**「改一个数要扫多个文件」即所有权失效信号**，应顺手补回「数字所有权」声明，而不是继续迁就复制。
+
 ## Documentation Style
 
 - Optimize for **clarity and comprehension**.
@@ -96,6 +115,7 @@ Each feature page must cover all applicable analyses below, **evidence-grounded*
    - **奖励内容**:每档/每礼包给出的具体道具与数量;若主表仅含 `Id` 等无奖励字段,必须追踪关联表写出实际奖励,禁止只写"N 个档位/N 条"了事。
    - 在此基础上再做 layering/funnel(免费→付费→鲸鱼、IAP 加档、双轨通行证、货币沉淀、短促充值)。
 2. **Values analysis** — **write extractable real numbers into the doc** (counts, durations, probabilities, level thresholds, scaling series, grid sizes). Do not leave a "needs parsing" placeholder.
+   - 具体数值只写在其权威文档内（见「Numeric Ownership」）；在其他文档中出现时改为链接或 ≈ 约估，不得复制精确值。
    - 关键档位和条目逐条列出数值，不只写区间或条数。商业化与解锁相关曲线（解锁消耗、礼包价格、奖励数量、档位或成就条件阈值）必须完整提取首/中/末或全档，禁止只写首条后用省略号代替，也禁止只写条数或档位数而不列具体数值。
    - Prefer directly readable sources (JSON/text data files) over binary tables.
    - For binary config tables, **read the repo's loader/deserializer code first** to recover the schema, then extract values.
@@ -128,4 +148,6 @@ Each feature page must cover all applicable analyses below, **evidence-grounded*
 - Confirm `docs/SUMMARY.md` points only to existing pages.
 - Run `python3 .agents/skills/project-docs/scripts/check_freshness.py` and review every reported status.
 - Run `git diff --check`; inspect the diff for unsupported claims and duplicated knowledge.
+- 改动任一精确数值后，用 `rg -n "<改后精确值>" docs/` 复查（被替换的旧值同样各查一遍），确认命中仅存在于权威文档；其他文档残留的精确值一律改回链接或 ≈ 约估。
+- 若上述复查显示「改一个数要扫多个文件」，按「Numeric Ownership」补回「数字所有权」声明，而不是保留复制值。
 - Do not run builds to verify documentation-only changes.
