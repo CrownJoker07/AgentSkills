@@ -8,6 +8,7 @@
 - [`repo-bugfix`](repo-bugfix/SKILL.md)：诊断和修复 Git 代码仓库中的 BUG，并通过独立 worktree 完成交付。
 - [`query-repository`](query-repository/SKILL.md)：只读定位当前可访问的本地 Git 仓库，从源码、配置或文档中查询业务规则和数值，并给出文件行号证据。
 - [`interview-questions`](interview-questions/SKILL.md)：读取文本或 PDF 简历，按固定骨架总结候选人、分析岗位匹配度并生成带考点的面试题清单。
+- [`english-passage-study`](english-passage-study/SKILL.md)：用简单英语逐句讲解英文段落的句意、结构、实用语法和同结构例句。
 
 ## Skill 结构
 
